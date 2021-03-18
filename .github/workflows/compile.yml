@@ -1,0 +1,24 @@
+name: Try Compile
+
+on: 
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+      - name: setup Typescript
+        run: npm install -g typescript
+      - name: restore packages
+        run: npm install
+      - name: tsc
+        run: tsc
+      - name: upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: compiled_files
+          path: "./out"  
+          
