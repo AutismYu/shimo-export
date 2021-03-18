@@ -32,7 +32,7 @@ let fmOptions = new Map<string, HTMLSelectElement>();
     h1.innerText = "修改导出的格式"
     fm.appendChild(h1)
     let helps = document.createElement("p")
-    helps.innerText = "下面所做的修改会自动保存。\n石墨不支持导出表单，我就没办法了。\n表单无法导出，表单的收集数据在另外的在线表格里。\n\n"
+    helps.innerText = "下面所做的修改会自动保存。\n石墨不支持导出表单，我就没办法了。\n表单无法导出，表单的收集数据在另外的在线表格里。\n尽量不要选择导出图片，可能会因为文档过大导出失败。\n\n"
     fm.appendChild(helps)
     let addSelect = function (id: string, text: string, options: string[]) {
         let p = document.createElement("p")

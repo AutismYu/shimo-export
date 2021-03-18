@@ -22,7 +22,7 @@ function URL2ShimoItem(url: string): ShimoItem | null {
 
 // 日志输出面板
 let logPanel = document.createElement("div")
-logPanel.style.width = "400px"
+logPanel.style.width = "500px"
 logPanel.style.height = "600px"
 logPanel.style.position = "fixed"
 logPanel.style.backgroundColor = "black"
