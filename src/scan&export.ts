@@ -8,7 +8,7 @@ async function ScanFolders(): Promise<void> {
         let name = BuildFolderPathName(fd, true)
         WriteLog("开始扫描文件夹：" + name)
         let ok = false
-        for (let retry = 0; retry < 3; retry++) {
+        for (let retry = 0; retry < 4; retry++) {
             if (retry > 0) {
                 WriteLog("重试：" + retry)
             }
@@ -118,7 +118,7 @@ async function ExportItems(): Promise<void> {
         }
         WriteLog("进度：" + (index / (len - 1) * 100).toFixed(1) + "% " + pathname + "." + format)
         let ok = false
-        for (let retry = 0; retry < 3; retry++) {
+        for (let retry = 0; retry < 4; retry++) {
             if (retry > 0) {
                 WriteLog("重试：" + retry.toFixed())
             }
@@ -128,7 +128,7 @@ async function ExportItems(): Promise<void> {
                 let zp = zip
                 if (v.path.length > 0) {
                     v.path.forEach(function (fd) {
-                        let zp2 = zip.folder(fd)
+                        let zp2 = zp.folder(fd)
                         if (zp2 == null) {
                             WriteLog("异常！zip folder 出错！ " + fd)
                             throw fd
@@ -195,7 +195,7 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
             GM_xmlhttpRequest({
                 url: u2,
                 method: "GET",
-                timeout: 15000,
+                timeout: 19000,
                 responseType: "blob",
                 headers: {
                     Accept: "*/*",
@@ -250,8 +250,8 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
                         now.setSeconds(now.getSeconds() + num)
                         WriteLog("石墨限制，等待到这之后再继续：" + now.toLocaleTimeString())
                         await Sleep(num * 1000)
+                        reject()
                     }
-                    reject()
                 }
             },
             onerror: function () {
@@ -263,7 +263,8 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
                 reject()
             }
         })
-    })
+    }
+    )
     return p
 }
 
