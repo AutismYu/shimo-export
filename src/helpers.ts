@@ -1,3 +1,4 @@
+/// <reference path = "header.ts" />
 /// <reference path = "interfaces.ts" />
 
 // 把石墨文档的链接转换为信息，这只处理链接字符串，返回的name默认是空的
@@ -32,13 +33,16 @@ logPanel.style.display = "none"
 logPanel.style.zIndex = "99999"
 logPanel.style.wordWrap = "anywhere"
 logPanel.style.overflow = "auto"
-document.body.appendChild(logPanel)
+document.body.insertBefore(logPanel, document.body.firstChild)
+let logHistory = ""
 
 function WriteLog(str: string) {
-    console.log(str)
-    logPanel.style.display = "block"
     let now = new Date
-    str = now.toLocaleTimeString() + " | " + str + "\n"
+    str = now.toLocaleTimeString() + " | " + str
+    console.log(str)
+    str += "\n"
+    logHistory += str
+    logPanel.style.display = "block"
     logPanel.innerText += str
     logPanel.scrollBy(0, logPanel.scrollHeight)
 }

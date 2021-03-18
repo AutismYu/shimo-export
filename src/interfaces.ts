@@ -1,3 +1,4 @@
+/// <reference path = "header.ts" />
 // 石墨文档里的文件类型
 enum ShimoItemType {
     folder,
