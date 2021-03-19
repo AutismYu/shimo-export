@@ -1,10 +1,10 @@
 /// <reference path = "helpers.ts" />
 
-let ExportFormats = new Map<string, string>()
+const ExportFormats = new Map<string, string>()
 
 // 格式选择菜单
-let fm = document.createElement("div");
-let fmOptions = new Map<string, HTMLSelectElement>();
+const fm = document.createElement("div");
+const fmOptions = new Map<string, HTMLSelectElement>();
 
 (function () {
     let defaultFormats = new Map<string, string>()

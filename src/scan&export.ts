@@ -1,6 +1,8 @@
 /// <reference path = "header.ts" />
 /// <reference path = "helpers.ts" />
 
+const fails: string[] = []
+
 // 扫描全部的文件夹
 async function ScanFolders(): Promise<void> {
     while (WaitingCollectFolderIDs.length > 0) {
@@ -24,6 +26,7 @@ async function ScanFolders(): Promise<void> {
             }
         }
         if (!ok) {
+            fails.push(name)
             WriteLog("放弃文件夹扫描：" + name)
         }
         WaitingCollectFolderIDs.splice(0, 1)
@@ -44,10 +47,10 @@ async function ScanFolder(folder: ShimoItem): Promise<void> {
             },
             timeout: 5000,
             method: "GET",
-            onload: function () {
-                if (this.status == 200) {
+            onload: function (rep) {
+                if (rep.status == 200) {
                     try {
-                        let array: ShimoFileObject[] = JSON.parse(this.responseText)
+                        let array: ShimoFileObject[] = JSON.parse(rep.responseText)
                         let path = CloneArray(folder.path)
                         path.push(folder.name)
                         array.forEach(function (v) {
@@ -70,7 +73,7 @@ async function ScanFolder(folder: ShimoItem): Promise<void> {
                         reject()
                     }
                 } else {
-                    WriteLog("检查子文件夹出错！返回" + this.status.toFixed() + "，id:" + id)
+                    WriteLog("检查子文件夹出错！返回" + rep.status.toFixed() + "，id:" + id)
                     reject()
                 }
             },
@@ -78,8 +81,8 @@ async function ScanFolder(folder: ShimoItem): Promise<void> {
                 WriteLog("检查子文件夹超时！ id:" + id)
                 reject()
             },
-            onerror: function () {
-                WriteLog("检查子文件夹出错！信息：" + this.error + "，id:" + id)
+            onerror: function (rep) {
+                WriteLog("检查子文件夹出错！信息：" + rep.error + "，id:" + id)
                 reject()
             }
         })
@@ -90,7 +93,16 @@ async function ScanFolder(folder: ShimoItem): Promise<void> {
 // 导出所有已知的文件
 async function ExportItems(): Promise<void> {
     WriteLog("扫描结束，统计信息：")
-    let map = new Map<number, number>()
+    let len = GotItems.length
+    WriteLog("总文件数量：" + len.toFixed())
+    if (len > 6) {
+        let guessTime = (len) / 6 * 60 + 60
+        let dd = new Date
+        dd.setSeconds(dd.getSeconds() + guessTime)
+        WriteLog("石墨文档有速度限制，1分钟最多只能导出6个文件，相当于10秒一个，所以说预计完成导出时间是：" + dd.toLocaleString())
+    }
+    let map = new Map<ShimoItemType, number>()
+    let goodCount = 0
     GotItems.forEach(function (v) {
         let key = v.type
         if (!map.has(key)) {
@@ -99,15 +111,18 @@ async function ExportItems(): Promise<void> {
             let olds = map.get(key) as number
             map.set(key, olds + 1)
         }
+        if (GetFormatByType(key) != null) {
+            goodCount += 1
+        }
     })
+    WriteLog("实际可导出文件数量：" + goodCount.toFixed())
     map.forEach(function (v, k) {
-        let typeName = ShimoItemType[k] as keyof typeof ShimoItemType
+        let typeName = ShimoItemTypeNames.get(k) || "未知格式："
         WriteLog(typeName + "：" + v)
     })
     WriteLog("下面开始下载要导出的文件")
     let zip = new JSZip
-    let fails: string[] = []
-    let len = GotItems.length
+   
     for (let index = 0; index < len; index++) {
         let v = GotItems[index]
         let pathname = BuildFolderPathName(v, true)
@@ -116,18 +131,22 @@ async function ExportItems(): Promise<void> {
             console.log("无法导出，跳过：", pathname)
             continue
         }
-        WriteLog("进度：" + (index / (len - 1) * 100).toFixed(1) + "% " + pathname + "." + format)
+        WriteLog("进度：" + (index / len * 100).toFixed(1) + "% " + pathname + "." + format)
         let ok = false
         for (let retry = 0; retry < 4; retry++) {
             if (retry > 0) {
                 WriteLog("重试：" + retry.toFixed())
             }
-            await Sleep(5900)
+            await Sleep(3000)
             try {
                 let blob = await ExportItem(v, format)
                 let zp = zip
                 if (v.path.length > 0) {
                     v.path.forEach(function (fd) {
+                        fd = fd.trim()
+                        if (fd.length < 1) {
+                            fd = "unNamed_" + Math.random().toString()
+                        }
                         let zp2 = zp.folder(fd)
                         if (zp2 == null) {
                             WriteLog("异常！zip folder 出错！ " + fd)
@@ -151,7 +170,7 @@ async function ExportItems(): Promise<void> {
             fails.push(pathname)
         }
     }
-    WriteLog("导出工作结束，失败文件个数：" + fails.length)
+    WriteLog("导出工作结束，失败数：" + fails.length)
     if (fails.length > 0) {
         let str = ""
         fails.forEach(function (v) {
@@ -159,10 +178,12 @@ async function ExportItems(): Promise<void> {
         })
         WriteLog(str)
     }
-    WriteLog("正在生成 zip 文件")
-    zip.file("log.txt", logHistory)
-    let b64 = await zip.generateAsync({ type: "base64" })
     let dt = new Date
+    let pass = (dt.getTime() - StartTime) / 1000 / 60
+    WriteLog("总用时：" + pass.toFixed(1) + " 分钟。")
+    WriteLog("正在生成 zip 文件")
+    zip.file("导出日志.txt", logHistory)
+    let b64 = await zip.generateAsync({ type: "base64" })
     let DownloadZIP = function () {
         DownloadData(dt.getTime().toFixed() + ".zip", b64)
     }
@@ -176,6 +197,7 @@ async function ExportItems(): Promise<void> {
     }
     logPanel.appendChild(but)
     GM_notification({ text: "您的石墨文档导出已经完成！可以下载了！", title: "下载完成！", timeout: 0 })
+    WriteLog("可以下载了！")
 }
 
 // 下载一个石墨文件，返回 base64 字符串
@@ -201,16 +223,16 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
                     Accept: "*/*",
                     Referer: refr
                 },
-                onload: function () {
-                    if (this.status == 200) {
-                        let obj: Blob = this.response
+                onload: function (rep) {
+                    if (rep.status == 200) {
+                        let obj: Blob = rep.response
                         resolve(obj)
                     } else {
-                        WriteLog("下载异常：" + this.status.toFixed() + " " + this.responseText)
+                        WriteLog("下载异常：" + rep.status.toFixed() + " " + rep.responseText)
                         reject()
                     }
-                }, onerror: function () {
-                    WriteLog("下载异常：" + this.error)
+                }, onerror: function (rep) {
+                    WriteLog("下载异常：" + rep.error)
                     reject()
                 }, ontimeout: function () {
                     WriteLog("下载超时！")
@@ -226,10 +248,10 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
             },
             method: "GET",
             timeout: 5000,
-            onload: async function () {
-                if (this.status == 200) {
+            onload: async function (rep) {
+                if (rep.status == 200) {
                     try {
-                        let info: ShimoExportResult = JSON.parse(this.responseText)
+                        let info: ShimoExportResult = JSON.parse(rep.responseText)
                         let u = info.redirectUrl
                         if (u.length > 15) {
                             downloads(u)
@@ -239,8 +261,8 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
                         reject()
                     }
                 } else {
-                    let str = this.responseText
-                    WriteLog("返回异常：" + this.status.toFixed() + " " + str)
+                    let str = rep.responseText
+                    WriteLog("返回异常：" + rep.status.toFixed() + " " + str)
                     //{"requestId":"e5a1795135de65730960400ca6d9f160","error":"Rate limit exceeded, retry in 22 seconds","errorCode":0}
                     const reg = new RegExp("retry in ([0-9]+) seconds", "gim")
                     let rs = reg.exec(str)
@@ -254,8 +276,8 @@ function ExportItem(t: ShimoItem, format: string): Promise<Blob> {
                     }
                 }
             },
-            onerror: function () {
-                WriteLog("返回出错：" + this.error)
+            onerror: function (rep) {
+                WriteLog("返回出错：" + rep.error)
                 reject()
             },
             ontimeout: function () {

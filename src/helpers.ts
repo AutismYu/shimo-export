@@ -21,7 +21,7 @@ function URL2ShimoItem(url: string): ShimoItem | null {
 }
 
 // 日志输出面板
-let logPanel = document.createElement("div")
+const logPanel = document.createElement("div")
 logPanel.style.width = "500px"
 logPanel.style.height = "600px"
 logPanel.style.position = "fixed"
@@ -40,10 +40,12 @@ function WriteLog(str: string) {
     let now = new Date
     str = now.toLocaleTimeString() + " | " + str
     console.log(str)
-    str += "\n"
-    logHistory += str
+    logHistory += str + "\n"
     logPanel.style.display = "block"
-    logPanel.innerText += str
+    let span = document.createElement("span")
+    span.innerText = str
+    span.style.display = "block"
+    logPanel.appendChild(span)
     logPanel.scrollBy(0, logPanel.scrollHeight)
 }
 
@@ -83,6 +85,7 @@ function DownloadData(filename: string, content: string) {
     c.remove()
 }
 
+// 异步里的暂停工作
 function Sleep(ms: number): Promise<void> {
     let t = new Promise<void>(function (resolve: (value: void) => void, reject: (reason?: any) => void) {
         setTimeout(function () {
