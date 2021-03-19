@@ -4,7 +4,7 @@
 // @supportURL https://github.com/gordonwalkedby/shimo-export
 // @homepage https://github.com/gordonwalkedby/shimo-export
 // @version 1.0
-// @description 我可以批量导出你石墨文档里全部或者指定文件夹下面的每个文件
+// @description 请先阅读 https://github.com/gordonwalkedby/shimo-export
 // @author Gordon Walkedby
 // @include https://shimo.im/*
 // @connect shimo.im

@@ -1,5 +1,5 @@
 # 石墨文档导出脚本
-这是一个油猴脚本。  
+这是一个 Tampermonkey 脚本。  
 
 石墨文档无疑是我用过的最好用的在线文档之一。  
 但是他不提供批量导出功能，提高了自备份数据、转移数据的门槛。   
@@ -36,7 +36,8 @@ HTTP: 429
 ![截图gfhhte3](https://s3.ax1x.com/2021/03/19/6RhtYQ.png)   
 
 # 安装、使用
-安装油猴脚本。   
+安装脚本： [greasy fork](https://greasyfork.org/zh-CN/scripts/423544-%E7%9F%B3%E5%A2%A8%E6%96%87%E6%A1%A3%E6%89%B9%E9%87%8F%E5%AF%BC%E5%87%BA)       
+**注意：我的API使用是按照 Tampermonkey 来编写的，不保证支持其他的脚本扩展（比如 Greasemonkey）。**    
 
 在石墨文档的页面，打开脚本菜单，可以看见“设置导出的格式”和“点我开始导出”。   
 第一次使用应该先设置导出的格式，或者不设置就是我默认的格式了。  
@@ -51,3 +52,6 @@ HTTP: 429
 # 使用的第三方类库
 - [jszip](https://stuk.github.io/jszip/)  
 
+# 源码
+- [github](https://github.com/gordonwalkedby/shimo-export)   
+- [gitee 镜像](https://gitee.com/walkedby/shimo-export)    
