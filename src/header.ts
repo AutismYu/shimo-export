@@ -3,7 +3,7 @@
 // @namespace https://walkedby.com/
 // @supportURL https://github.com/gordonwalkedby/shimo-export
 // @homepage https://github.com/gordonwalkedby/shimo-export
-// @version 1.0
+// @version 1.1
 // @description 请先阅读 https://github.com/gordonwalkedby/shimo-export
 // @author Gordon Walkedby
 // @include https://shimo.im/*

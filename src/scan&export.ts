@@ -3,6 +3,8 @@
 
 const fails: string[] = []
 
+const AllFolders = new Map<string, ShimoItem>()
+
 // 扫描全部的文件夹
 async function ScanFolders(): Promise<void> {
     while (WaitingCollectFolderIDs.length > 0) {
@@ -60,14 +62,17 @@ async function ScanFolder(folder: ShimoItem): Promise<void> {
                                 t.path = CloneArray(path)
                                 if (t.type == ShimoItemType.folder) {
                                     WaitingCollectFolderIDs.push(t)
+                                    let path2 = BuildFolderPathName(t, true)
+                                    AllFolders.set(path2, t)
                                     console.log(" fd", t)
                                 } else {
                                     GotItems.push(t)
                                     console.log(" item", t)
                                 }
-                                resolve()
                             }
                         })
+                        resolve()
+                        return
                     } catch (error) {
                         WriteLog("API返回JSON解析失败：" + error + "，id:" + id)
                         reject()
@@ -95,11 +100,12 @@ async function ExportItems(): Promise<void> {
     WriteLog("扫描结束，统计信息：")
     let len = GotItems.length
     WriteLog("总文件数量：" + len.toFixed())
-    if (len > 6) {
-        let guessTime = (len) / 6 * 60 + 60
+    const maxDownloadOnce = 5
+    if (len > maxDownloadOnce) {
+        let guessTime = (len) / maxDownloadOnce * 60 + 60
         let dd = new Date
         dd.setSeconds(dd.getSeconds() + guessTime)
-        WriteLog("石墨文档有速度限制，1分钟最多只能导出6个文件，相当于10秒一个，所以说预计完成导出时间是：" + dd.toLocaleString())
+        WriteLog("石墨文档有速度限制，1分钟最多只能导出 " + maxDownloadOnce.toFixed() + " 个文件，相当于 " + (60 / maxDownloadOnce).toFixed() + " 秒一个，所以说预计完成导出时间是：" + dd.toLocaleString())
     }
     let map = new Map<ShimoItemType, number>()
     let goodCount = 0
@@ -121,8 +127,9 @@ async function ExportItems(): Promise<void> {
         WriteLog(typeName + "：" + v)
     })
     WriteLog("下面开始下载要导出的文件")
+
     let zip = new JSZip
-   
+
     for (let index = 0; index < len; index++) {
         let v = GotItems[index]
         let pathname = BuildFolderPathName(v, true)
@@ -168,8 +175,34 @@ async function ExportItems(): Promise<void> {
         if (!ok) {
             WriteLog("失败，跳过：" + pathname)
             fails.push(pathname)
+        } else {
+            let path2 = BuildFolderPathName(v, false)
+            let toRemove: string | null = null
+            for (let g = 0; g < AllFolders.size; g++) {
+                let fd = AllFolders.keys().next().value as string
+                if (fd == path2) {
+                    toRemove = fd
+                    break
+                }
+            }
+            if (toRemove != null) {
+                AllFolders.delete(toRemove)
+            }
         }
     }
+    AllFolders.forEach(function (v) {
+        let zp = zip
+        v.path.push(v.name)
+        v.path.forEach(function (fd) {
+            let zp2 = zp.folder(fd)
+            if (zp2 == null) {
+                WriteLog("异常！zip folder 出错！ " + fd)
+                throw fd
+            }
+            zp = zp2
+        })
+        zp.file("空白文件夹.txt", "Nothing here")
+    })
     WriteLog("导出工作结束，失败数：" + fails.length)
     if (fails.length > 0) {
         let str = ""
