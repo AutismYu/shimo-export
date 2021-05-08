@@ -3,12 +3,13 @@
 // @namespace https://walkedby.com/
 // @supportURL https://github.com/gordonwalkedby/shimo-export
 // @homepage https://github.com/gordonwalkedby/shimo-export
-// @version 1.1
+// @version 1.2
 // @description 请先阅读 https://github.com/gordonwalkedby/shimo-export
 // @author Gordon Walkedby
 // @include https://shimo.im/*
 // @connect shimo.im
 // @connect smcdn.cn
+// @connect shimonote.com
 // @grant GM_xmlhttpRequest
 // @grant GM_setValue
 // @grant GM_notification
